@@ -51,7 +51,13 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 if __name__ == '__main__':
     # 初期集団を生成する
     pop = toolbox.population(n=300)
-    CXPB, MUTPB, NGEN = 0.6, 0.5, 10 # 交差確率、突然変異確率、進化計算のループ回数
+
+    # 交叉
+    # – 一定確率で二つの「種」の遺伝子配列が組み合わされて新しい種となること
+
+    # 突然変異
+    # – 遺伝子配列の中の特定のビットが一定確率で逆転して、別の種となること
+    CXPB, MUTPB, NGEN = 0.6, 0.5, 100 # 交差確率、突然変異確率、進化計算のループ回数
 
     print("進化開始")
 
@@ -121,7 +127,7 @@ if __name__ == '__main__':
     print("-- 進化終了 --")
 
     best_ind = tools.selBest(pop, 1)[0]
-    print("最も優れていた個体: %s, %s" % (best_ind, best_ind.fitness.values))
+    print(f"最も優れていた個体: {best_ind.fitness.values}")
     ret_best = Schedule(best_ind)
     ret_best.print_csv()
-    ret_best.print_tsv()
+    # ret_best.print_tsv()

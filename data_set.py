@@ -16,7 +16,7 @@ SHIFT_BOXES = [
 
 LEN_SHIFT = len(SHIFT_BOXES)
 
-# 各コマの想定人数
+# 各コマの想定発注数
 NEED_ITEM = [
   7,
   7,
