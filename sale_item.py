@@ -5,19 +5,37 @@ import sys
 sys.path.append(os.path.join(os.path.dirname(__file__), './lib'))
 
 
-# 従業員を表すクラス
 class SaleItem(object):
-  def __init__(self, no, name, age, manager, wills):
-    self.no = no
-    self._name = name
-    self.age = age
-    self.manager = manager
-    # 発注希望日
-    self.wills = wills
+  """_summary_
+
+  Args:
+      object (_type_): _description_
+  """
+
+  def __init__(self, jan, name, pri, will):
+    self._jan = str(jan)
+    self._name = name if name is None else str(jan)
+    if isinstance(pri, int) or isinstance(pri, str) and len(pri)>0:
+      self._pri = int(pri)
+    else:
+      self._pri = 1
+
+    # 発注希望数
+    self._will = int(will)
+
+  @property
+  def jan(self) -> str:
+    return self._jan
 
   @property
   def name(self) -> str:
     return self._name
 
-  def is_applicated(self, box_name):
-    return (box_name in self.wills)
+  @property
+  def priority(self) -> int:
+    return self._pri
+
+
+  @property
+  def will(self) -> int:
+    return self._will

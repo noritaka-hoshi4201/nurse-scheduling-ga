@@ -26,10 +26,11 @@ toolbox = base.Toolbox()
 
 toolbox.register("map", futures.map)
 
-toolbox.register("attr_bool", random.randint, 0, 1)
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, 70)
-toolbox.register("population", tools.initRepeat, list, toolbox.individual)
+data = Schedule()
 
+toolbox.register("attr_bool", random.randint, 0, 1)
+toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, int(data.len_item_shift_all))
+toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 # resisterでtoolboxに第一変数の名前のメソッドを追加する。
 # toolbox.attr_bool: random.randint(0,1)
@@ -48,9 +49,11 @@ toolbox.register("mutate", tools.mutFlipBit, indpb=0.05)
 # 選択関数を定義(トーナメント選択、tournsizeはトーナメントの数？)
 toolbox.register("select", tools.selTournament, tournsize=3)
 
+
+
 if __name__ == '__main__':
     # 初期集団を生成する
-    pop = toolbox.population(n=300)
+    pop = toolbox.population(n=300) # 1世代内でいくつの個体を持つか？
 
     # 交叉
     # – 一定確率で二つの「種」の遺伝子配列が組み合わされて新しい種となること
@@ -130,4 +133,6 @@ if __name__ == '__main__':
     print(f"最も優れていた個体: {best_ind.fitness.values}")
     ret_best = Schedule(best_ind)
     ret_best.print_csv()
+    path = ret_best.save()
+    print(f"save -> {path}")
     # ret_best.print_tsv()
