@@ -22,12 +22,12 @@ def evaluate_item_count(individual) -> tuple:
         tubple: 全てが0になった時が最適解となるようにする
     """
     sche = Schedule(individual)
-
+    return sche.get_eval_value()
     # 想定発注数とアサイン発注数の差
-    people_count_sub_sum = sum(sche.abs_item_between_need_and_actual()) / sche.len_item_shift_all
-    # アサイン数が応募数の半分以下の従業員数
-    few_work_user = len(sche.few_work_user()) / 10.0
-    return (people_count_sub_sum, # -10.0
-            few_work_user        # -1.0
-            )
+    # people_count_sub_sum = sum(sche.abs_item_between_need_and_actual()) / sche.len_item_shift_all
+    # # アサイン数が応募数の半分以下の従業員数
+    # few_work_user = len(sche.few_work_user()) / 10.0
+    # return (people_count_sub_sum, # -10.0
+    #         few_work_user        # -1.0
+    #         )
 

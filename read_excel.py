@@ -19,7 +19,7 @@ def read_excel() -> dict:
     print(f"dimention2: {len(df)} - {len(df.columns)}")
     print(f"index: {df.index} - {len(df.index)}")
     print(f"{list(df.index)}")
-    print(f"columns: {df.columns}")
+    print(f"columns: {list(df.columns)}")
 
 
 

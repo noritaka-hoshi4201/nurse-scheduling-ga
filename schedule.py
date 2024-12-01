@@ -28,6 +28,16 @@ class Schedule(object):
     def save(self) -> str:
         return self.__class__.src_data.save(self.slice_item_shift())
 
+    def get_calc_param(self) -> tuple:
+        return self._data.get_calc_param()
+
+    def get_eval_fitness(self) -> tuple:
+        return self._data.get_eval_fitness()
+
+    def get_eval_value(self) -> tuple:
+        datas = self.slice_item_shift()
+        return self.__class__.src_data.get_eval_value(datas)
+
     @property
     def len_item(self) -> int:
         return self._data.item_count

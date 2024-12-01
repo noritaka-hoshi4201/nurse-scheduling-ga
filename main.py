@@ -19,14 +19,15 @@ import data_set
 
 import evaluate
 
-creator.create("FitnessItemCount", base.Fitness, weights=evaluate.FITNESS_RESULT)
+# データ読み込み
+data = Schedule()
+
+creator.create("FitnessItemCount", base.Fitness, weights=data.get_eval_fitness())
 creator.create("Individual", list, fitness=creator.FitnessItemCount)
 
 toolbox = base.Toolbox()
 
 toolbox.register("map", futures.map)
-
-data = Schedule()
 
 toolbox.register("attr_bool", random.randint, 0, 1)
 toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, int(data.len_item_shift_all))
@@ -52,21 +53,25 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 
 if __name__ == '__main__':
+    population, CXPB, MUTPB, NGEN = data.get_calc_param() # 交差確率、突然変異確率、進化計算のループ回数
+
     # 初期集団を生成する
-    pop = toolbox.population(n=300) # 1世代内でいくつの個体を持つか？
+    pop = toolbox.population(n=population) # 1世代内でいくつの個体を持つか？
 
     # 交叉
     # – 一定確率で二つの「種」の遺伝子配列が組み合わされて新しい種となること
 
     # 突然変異
     # – 遺伝子配列の中の特定のビットが一定確率で逆転して、別の種となること
-    CXPB, MUTPB, NGEN = 0.6, 0.5, 100 # 交差確率、突然変異確率、進化計算のループ回数
 
     print("進化開始")
 
     # 初期集団の個体を評価する
     fitnesses = list(map(toolbox.evaluate, pop))
+    # print(f"fitnesses: {fitnesses}")
     for ind, fit in zip(pop, fitnesses):  # zipは複数変数の同時ループ
+        # print(f"ind.fitness.values: {ind.fitness.values}")
+        # print(f"fit: {fit}")
         # 適合性をセットする
         ind.fitness.values = fit
 
