@@ -50,6 +50,10 @@ class Schedule(object):
     def len_item_shift_all(self) -> float:
         return float(self._data.data_set_count)
 
+    @property
+    def eval_count(self) -> int:
+        return self._data.eval_count
+    
     # ランダムなデータを生成
     @classmethod
     def make_sample(cls, total) -> list:

@@ -25,6 +25,7 @@ KEY_WILL = "will"
 
 KEY_WEEK = ["mon","tue","wed","thu","fri","sat","sun"]
 KEY_TOTAL = "total"
+KEY_ORDERPTN2 = "orderptn2"
 
 SRC_PATH = os.path.join(os.path.dirname(__file__),"data/item.xlsx")
 
@@ -34,6 +35,7 @@ class ItemData(object):
     Args:
         Object (_type_): _description_
     """
+    _eval_count = 0
 
     def __init__(self):
         """_summary_
@@ -48,23 +50,34 @@ class ItemData(object):
         items = []
         need = []
         while True:
-          lst = list(df.index)
-          if len(lst) <= HEADER_CNT:
-              break
+            lst = list(df.index)
+            if len(lst) <= HEADER_CNT:
+                break
+            key = lst[HEADER_WILL]
+            for item in KEY_WEEK:
+                need.append(int(df.at[key, item]))
 
-          key = lst[HEADER_WILL]
-          for item in KEY_WEEK:
-              need.append(int(df.at[key, item]))
+            lst = lst[HEADER_CNT:]
 
-          lst = lst[HEADER_CNT:]
-          for jan in lst:
-              items.append(SaleItem(
-                  jan=jan,
-                  name=df.at[jan, KEY_NAME],
-                  pri=df.at[jan, KEY_PRI],
-                  will=df.at[jan, KEY_WILL]
+            lst2 = list(df.index.unique())
+            for idx, val in enumerate(lst2):
+                if val == 'JAN':
+                    lst2 = lst2[(idx+1):]
+                    break
+            if len(lst) != len(lst2):
+                print(f"lst: {lst}" )
+                print(f"lst2: {lst2}" )
+                raise ValueError("JAN に重複が存在します")
+
+
+            for jan in lst:
+                items.append(SaleItem(
+                    jan=jan,
+                    name=df.at[jan, KEY_NAME],
+                    pri=df.at[jan, KEY_PRI],
+                    will=df.at[jan, KEY_WILL]
               ))
-          break
+            break
         self._need = need
         self._items = items
 
@@ -111,6 +124,10 @@ class ItemData(object):
             lst.append(param[0])
         return tuple(lst)
 
+    @property
+    def eval_count(self) -> int:
+        return self.__class__._eval_count
+
     def get_eval_value(self, lst_data: list) -> tuple:
         """評価関数
 
@@ -120,6 +137,7 @@ class ItemData(object):
         Returns:
             tuple: _description_
         """
+        self.__class__._eval_count += 1
 
         week_total = [0,0,0,0,0,0,0]
         item_score_total = 0
@@ -180,7 +198,7 @@ class ItemData(object):
                 count_score_total += tmp*tmp*total_dec_over
 
         ret = (count_score_total, item_score_total, continuous_total, types_cnt)
-        print(f"eval: {ret}")
+        # print(f"eval: {ret}")
         return ret
 
 
@@ -201,10 +219,33 @@ class ItemData(object):
         index = list(df.index)
         index = index[HEADER_CNT:]
         offset = 0
+
+        wday_total = [0,0,0,0,0,0,0]
+
         for key in index:
-          tmp = lst[offset] + [sum(lst[offset])]
-          df.loc[key, KEY_WEEK[0]:KEY_TOTAL] = tmp
-          offset += 1
+            tmp = lst[offset]
+            odnp = f"d{tmp[0]}{tmp[1]}{tmp[2]}{tmp[3]}{tmp[4]}{tmp[5]}{tmp[6]}"
+            odnp2 = f"D{tmp[6]}{tmp[0]}{tmp[1]}{tmp[2]}{tmp[3]}{tmp[4]}{tmp[5]}"
+            tmp = tmp + [sum(lst[offset])] + [odnp,odnp2]
+            df.loc[key, KEY_WEEK[0]:KEY_ORDERPTN2] = tmp
+
+            wday_total = [ val1+val2 for val1, val2 in zip(wday_total, tmp)]
+            offset += 1
+
+        # 曜日毎の総計
+        wday_total = wday_total + [sum(wday_total)]
+        df.loc[list(df.index)[1],KEY_WEEK[0]:KEY_TOTAL] = wday_total
+        # print(f"wday_total: {list(df.index)[1]} -> {wday_total}")
+
+        evals = self.get_eval_value(lst)
+        header = list(df.columns)
+        param_index = header.index("param")
+
+        offset = 6
+        for eval in evals:
+            df.iat[HEADER_PARAM_CNT+offset, param_index+3] = eval
+            offset += 3
+
         with pd.ExcelWriter(path, 
                             engine="openpyxl", 
                             mode="a", 

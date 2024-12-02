@@ -20,9 +20,9 @@ import data_set
 import evaluate
 
 # データ読み込み
-data = Schedule()
+init_data = Schedule()
 
-creator.create("FitnessItemCount", base.Fitness, weights=data.get_eval_fitness())
+creator.create("FitnessItemCount", base.Fitness, weights=init_data.get_eval_fitness())
 creator.create("Individual", list, fitness=creator.FitnessItemCount)
 
 toolbox = base.Toolbox()
@@ -30,7 +30,7 @@ toolbox = base.Toolbox()
 toolbox.register("map", futures.map)
 
 toolbox.register("attr_bool", random.randint, 0, 1)
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, int(data.len_item_shift_all))
+toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, int(init_data.len_item_shift_all))
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 # resisterでtoolboxに第一変数の名前のメソッドを追加する。
@@ -53,91 +53,96 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 
 if __name__ == '__main__':
-    population, CXPB, MUTPB, NGEN = data.get_calc_param() # 交差確率、突然変異確率、進化計算のループ回数
+    try:
+        population, CXPB, MUTPB, NGEN = init_data.get_calc_param() # 交差確率、突然変異確率、進化計算のループ回数
 
-    # 初期集団を生成する
-    pop = toolbox.population(n=population) # 1世代内でいくつの個体を持つか？
-
-    # 交叉
-    # – 一定確率で二つの「種」の遺伝子配列が組み合わされて新しい種となること
-
-    # 突然変異
-    # – 遺伝子配列の中の特定のビットが一定確率で逆転して、別の種となること
-
-    print("進化開始")
-
-    # 初期集団の個体を評価する
-    fitnesses = list(map(toolbox.evaluate, pop))
-    # print(f"fitnesses: {fitnesses}")
-    for ind, fit in zip(pop, fitnesses):  # zipは複数変数の同時ループ
-        # print(f"ind.fitness.values: {ind.fitness.values}")
-        # print(f"fit: {fit}")
-        # 適合性をセットする
-        ind.fitness.values = fit
-
-    print("  %i の個体を評価" % len(pop))
-
-     # 進化計算開始
-    for g in range(NGEN):
-        print("-- %i 世代 --" % g)
-
-        # 選択
-        # 次世代の個体群を選択
-        offspring = toolbox.select(pop, len(pop))
-        # 個体群のクローンを生成
-        offspring = list(map(toolbox.clone, offspring))
-
-        # 選択した個体群に交差と突然変異を適応する
+        # 初期集団を生成する
+        pop = toolbox.population(n=population) # 1世代内でいくつの個体を持つか？
 
         # 交叉
-        # 偶数番目と奇数番目の個体を取り出して交差
-        for child1, child2 in zip(offspring[::2], offspring[1::2]):
-            if random.random() < CXPB:
-                toolbox.mate(child1, child2)
-                # 交叉された個体の適合度を削除する
-                del child1.fitness.values
-                del child2.fitness.values
+        # – 一定確率で二つの「種」の遺伝子配列が組み合わされて新しい種となること
 
-        # 変異
-        for mutant in offspring:
-            if random.random() < MUTPB:
-                toolbox.mutate(mutant)
-                del mutant.fitness.values
+        # 突然変異
+        # – 遺伝子配列の中の特定のビットが一定確率で逆転して、別の種となること
 
-        # 適合度が計算されていない個体を集めて適合度を計算
-        invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
-        fitnesses = map(toolbox.evaluate, invalid_ind)
-        for ind, fit in zip(invalid_ind, fitnesses):
+        print("進化開始")
+
+        # 初期集団の個体を評価する
+        fitnesses = list(map(toolbox.evaluate, pop))
+        # print(f"fitnesses: {fitnesses}")
+        for ind, fit in zip(pop, fitnesses):  # zipは複数変数の同時ループ
+            # print(f"ind.fitness.values: {ind.fitness.values}")
+            # print(f"fit: {fit}")
+            # 適合性をセットする
             ind.fitness.values = fit
 
-        print("  %i の個体を評価" % len(invalid_ind))
+        print("  %i の個体を評価" % len(pop))
 
-        # 次世代群をoffspringにする
-        pop[:] = offspring
+        # 進化計算開始
+        for g in range(NGEN):
+            print("-- %i 世代 --" % g)
 
-        # すべての個体の適合度を配列にする
-        index = 1
-        for v in ind.fitness.values:
-          fits = [v for ind in pop]
+            # 選択
+            # 次世代の個体群を選択
+            offspring = toolbox.select(pop, len(pop))
+            # 個体群のクローンを生成
+            offspring = list(map(toolbox.clone, offspring))
 
-          length = len(pop)
-          mean = sum(fits) / length
-          sum2 = sum(x*x for x in fits)
-          std = abs(sum2 / length - mean**2)**0.5
+            # 選択した個体群に交差と突然変異を適応する
 
-          print(f"* パラメータ{index}")
-          print("  Min %s" % min(fits))
-          print("  Max %s" % max(fits))
-          print("  Avg %s" % mean)
-          print("  Std %s" % std)
-          index += 1
+            # 交叉
+            # 偶数番目と奇数番目の個体を取り出して交差
+            for child1, child2 in zip(offspring[::2], offspring[1::2]):
+                if random.random() < CXPB:
+                    toolbox.mate(child1, child2)
+                    # 交叉された個体の適合度を削除する
+                    del child1.fitness.values
+                    del child2.fitness.values
 
-    print("-- 進化終了 --")
+            # 変異
+            for mutant in offspring:
+                if random.random() < MUTPB:
+                    toolbox.mutate(mutant)
+                    del mutant.fitness.values
 
-    best_ind = tools.selBest(pop, 1)[0]
-    print(f"最も優れていた個体: {best_ind.fitness.values}")
-    ret_best = Schedule(best_ind)
-    ret_best.print_csv()
-    path = ret_best.save()
-    print(f"save -> {path}")
-    # ret_best.print_tsv()
+            # 適合度が計算されていない個体を集めて適合度を計算
+            invalid_ind = [ind for ind in offspring if not ind.fitness.valid]
+            fitnesses = map(toolbox.evaluate, invalid_ind)
+            for ind, fit in zip(invalid_ind, fitnesses):
+                ind.fitness.values = fit
+
+            print("  %i の個体を評価" % len(invalid_ind))
+
+            # 次世代群をoffspringにする
+            pop[:] = offspring
+
+            # すべての個体の適合度を配列にする
+            # print(f"ind.fitness.values: {ind.fitness.values}")
+            
+            for idx, _val in enumerate(ind.fitness.values):
+                fits = [tmp.fitness.values[idx] for tmp in pop]
+                # print(f"fits: {fits}")
+                length = len(pop)
+                mean = sum(fits) / length
+                sum2 = sum(x*x for x in fits)
+                std = abs(sum2 / length - mean**2)**0.5
+
+                print(f"* パラメータ{idx+1}")
+                print("  Min %s" % min(fits))
+                print("  Max %s" % max(fits))
+                print("  Avg %s" % mean)
+                print("  Std %s" % std)
+
+        print("-- 進化終了 --")
+
+        best_ind = tools.selBest(pop, 1)[0]
+        print(f"最も優れていた個体: {best_ind.fitness.values}")
+        ret_best = Schedule(best_ind)
+        ret_best.print_csv()
+        path = ret_best.save()
+        print(f"save -> {path}")
+
+        print(f"eval count: {init_data.eval_count}")
+        # ret_best.print_tsv()
+    except Exception as ex:
+        print(f"エラーが発生しました: {ex}")
