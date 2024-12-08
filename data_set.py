@@ -17,7 +17,8 @@ IDX_PARAM_TYPES = 2       # 商品の種類数
 IDX_PARAM_CONTINUOUS = 3  # 商品の連続数
 
 # 評価関数の種類数
-EVAL_PARAM_COUNT = 4
+# EVAL_PARAM_COUNT = 4
+EVAL_PARAM_COUNT = 3
 
 KEY_NAME = "name"
 KEY_PRI = "priority"
@@ -47,6 +48,14 @@ class ItemData(object):
         print(f"get_calc_param: {self.get_calc_param()}")
 
     def load_data(self, df):
+        """データロード
+
+        Args:
+            df (_type_): _description_
+
+        Raises:
+            ValueError: _description_
+        """        
         items = []
         need = []
         while True:
@@ -82,6 +91,11 @@ class ItemData(object):
         self._items = items
 
     def load_param(self, df):
+        """パラメータの取得
+
+        Args:
+            df (_type_): _description_
+        """        
         header = list(df.columns)
         param_index = header.index("param")
 
@@ -118,10 +132,11 @@ class ItemData(object):
         """各評価の重要度付き評価方法を返す
         Returns:
             tuple: _description_
-        """       
+        """
         lst = []
         for param in self._eval_params:
             lst.append(param[0])
+        print(f"get_eval_fitness: {lst}")
         return tuple(lst)
 
     @property
@@ -151,37 +166,28 @@ class ItemData(object):
         item_index = 0
         types_cnt = 0
         while item_index < len(lst_data):
-          item = self.data_list[item_index]
-          schedule = lst_data[item_index]
-          cnt = sum(schedule)
-          will = item.will
-          pri_current = item.priority
+            item = self.data_list[item_index]
+            schedule = lst_data[item_index]
+            cnt = sum(schedule)
+            will = item.will
+            pri_current = item.priority
 
-          if cnt > 0:
-             # 商品種類数
-             types_cnt +=1
+            if cnt > 0:
+                # 商品種類数
+                types_cnt +=1
 
-          for val in range(cnt):
-              # will までの 優先度の合計値
-              item_score_total += pri_current
-              if val < will-1:
-                  pri_current -= pri_dec_under
-              else:
-                  pri_current -= pri_dec_over
-
-          continuous_total = 0
-          continuous_current = 0
-          for idx, val in enumerate(schedule):
-              week_total[idx] += schedule[idx] # 各曜日の集計
-              if will < 7 and idx>0:
-                  # 希望数が7より少ないなら 連続 をカウントする
-                  if schedule[idx]>0 and schedule[idx-1]>0:
-                      continuous_current += 1
-                      continuous_total += continuous_current
-                  else:
-                      continuous_current = 0
-
-          item_index += 1
+            #優先度の評価
+            diff = (cnt-will)
+            if diff > 0:
+                # 希望数より多い
+                item_score_total += diff*diff*pri_current/pri_dec_over
+            elif diff < 0:
+                tmp = diff*diff*pri_current/pri_dec_under
+                item_score_total += tmp
+            
+            for wday in range(7):
+                week_total[wday] += schedule[wday]
+            item_index +=1
 
         # ２個目以降の減衰値
         param_total = self._eval_params[IDX_PARAM_TOTAL_COUNT]
@@ -189,15 +195,18 @@ class ItemData(object):
         total_dec_under = param_total[1] # 希望数以下の時
         total_dec_over = param_total[2] # 希望数超えた時
 
+        # print(f"week_total: {week_total}")
         count_score_total = 0
         for idx, will in enumerate(self._need):
             tmp = week_total[idx] - will
-            if will < week_total[idx]:
+            if will > week_total[idx]:
+                # 不足分カウント
                 count_score_total += tmp*tmp*total_dec_under
             else:
+                # 過剰分カウント
                 count_score_total += tmp*tmp*total_dec_over
-
-        ret = (count_score_total, item_score_total, continuous_total, types_cnt)
+        # ret = (count_score_total, item_score_total, types_cnt, continuous_total)
+        ret = (count_score_total, item_score_total, types_cnt)
         # print(f"eval: {ret}")
         return ret
 

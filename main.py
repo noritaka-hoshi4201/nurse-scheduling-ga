@@ -18,6 +18,7 @@ from schedule import Schedule
 import data_set
 
 import evaluate
+import subprocess
 
 # データ読み込み
 init_data = Schedule()
@@ -30,7 +31,10 @@ toolbox = base.Toolbox()
 toolbox.register("map", futures.map)
 
 toolbox.register("attr_bool", random.randint, 0, 1)
-toolbox.register("individual", tools.initRepeat, creator.Individual, toolbox.attr_bool, int(init_data.len_item_shift_all))
+toolbox.register("individual", tools.initRepeat, 
+                 creator.Individual, 
+                 toolbox.attr_bool, 
+                 int(init_data.len_item_shift_all))
 toolbox.register("population", tools.initRepeat, list, toolbox.individual)
 
 # resisterでtoolboxに第一変数の名前のメソッドを追加する。
@@ -54,7 +58,11 @@ toolbox.register("select", tools.selTournament, tournsize=3)
 
 if __name__ == '__main__':
     try:
+        # subprocess.Popen(["start", "", data_set.SRC_PATH], shell=True)
+
         population, CXPB, MUTPB, NGEN = init_data.get_calc_param() # 交差確率、突然変異確率、進化計算のループ回数
+
+        print(f"評価パラメータ: {init_data.get_calc_param()}")
 
         # 初期集団を生成する
         pop = toolbox.population(n=population) # 1世代内でいくつの個体を持つか？
@@ -111,7 +119,7 @@ if __name__ == '__main__':
             for ind, fit in zip(invalid_ind, fitnesses):
                 ind.fitness.values = fit
 
-            print("  %i の個体を評価" % len(invalid_ind))
+            print(f"  {len(invalid_ind)} の個体を評価" )
 
             # 次世代群をoffspringにする
             pop[:] = offspring
@@ -127,11 +135,7 @@ if __name__ == '__main__':
                 sum2 = sum(x*x for x in fits)
                 std = abs(sum2 / length - mean**2)**0.5
 
-                print(f"* パラメータ{idx+1}")
-                print("  Min %s" % min(fits))
-                print("  Max %s" % max(fits))
-                print("  Avg %s" % mean)
-                print("  Std %s" % std)
+                print(f"* パラメータ{idx+1}, Min:{min(fits)}, Max:{max(fits)}, Avg:{mean}, Std:{std}")
 
         print("-- 進化終了 --")
 
@@ -141,6 +145,10 @@ if __name__ == '__main__':
         ret_best.print_csv()
         path = ret_best.save()
         print(f"save -> {path}")
+        subprocess.Popen(["start", "", path], shell=True)
+
+        tmp = float("0.346")
+        print("{:.2%}".format(tmp))
 
         print(f"eval count: {init_data.eval_count}")
         # ret_best.print_tsv()
